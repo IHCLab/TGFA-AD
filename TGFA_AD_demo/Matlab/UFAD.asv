@@ -1,0 +1,47 @@
+function [mask_x,image,residual_pp,Final_ALGORITHM]=UFAD(data_L,S_est,model1d,use_guide,use_SA)
+a = 0.1;
+model1d=double(model1d);
+mask_x= genMask(a);
+[rows, cols, ~]  = size(data_L);
+%imshow(mask_x)
+
+%% DATA FITTING TERM CLOSED FOR 
+
+if use_SA==1
+
+    image=self_attention(model1d,S_est,S_est);
+
+    image=image.^2;
+    image=(1-exp(-1*image));
+    
+    figure('Name','blend')
+    show=reshape(image,rows,cols);
+    imshow(show)
+
+elseif use_SA==0
+
+    alfa=(model1d*S_est')*inv(S_est*S_est');
+    
+    figure('Name','blend')
+    show=(alfa)*S_est;
+    show=reshape(show,rows,cols);
+    imshow(show*2)
+    
+    image=((alfa)*S_est).^2;
+    image=(1-exp(-1*image));
+
+end
+%%  decide the filter 
+image=reshape(image,rows,cols);
+
+if use_guide==0
+    DataMat =  padding(data_L);
+    [Final_ALGORITHM]=filtering(DataMat,mask_x,image);
+
+elseif use_guide==1
+     DataMat=data_L;
+     [Final_ALGORITHM]=filtering_guied(DataMat,image);
+end
+
+residual_pp=sum(Final_ALGORITHM,3);
+
